@@ -64,6 +64,7 @@ void liberar_grafo(GRAFO *grafo)
                     free(grafo->matriz_adjacencia[i]);
                 }
             }
+            
             free(grafo->matriz_adjacencia);
             grafo->matriz_adjacencia = NULL;
         }
@@ -86,19 +87,16 @@ short int inserir_aresta(GRAFO *grafo, int vertice_origem, int vertice_destino, 
     // Verificações necessarias para inserir a aresta
     if (grafo != NULL && vertice_origem > 0 && vertice_origem <= grafo->n_vertices && vertice_destino > 0 && vertice_destino <= grafo->n_vertices && ((!grafo->eh_ponderado && peso == 1) || (grafo->eh_ponderado)))
     {
-        ARESTA *nova_aresta = criar_aresta(vertice_destino, peso);
-
-        nova_aresta->proximo = grafo->vetor_adjacencia[vertice_origem - 1].lista_aresta;
-        grafo->vetor_adjacencia[vertice_origem - 1].lista_aresta = nova_aresta;
-        grafo->vetor_adjacencia[vertice_origem - 1].vertice.grau++;
+        
+        grafo->matriz_adjacencia[vertice_origem - 1][vertice_destino - 1].bolean = 1; // Marca a aresta como existente
+        grafo->matriz_adjacencia[vertice_origem - 1][vertice_destino - 1].peso_aresta = peso; // Define o peso da aresta, se for ponderada
+        
 
         if (!grafo->eh_digrafo)
         {
             // Se o grafo não é direcionado, adiciona a aresta na direção oposta
-            ARESTA *nova_aresta_oposta = criar_aresta(vertice_origem, peso);
-            nova_aresta_oposta->proximo = grafo->vetor_adjacencia[vertice_destino - 1].lista_aresta;
-            grafo->vetor_adjacencia[vertice_destino - 1].lista_aresta = nova_aresta_oposta;
-            grafo->vetor_adjacencia[vertice_destino - 1].vertice.grau++;
+            grafo->matriz_adjacencia[vertice_destino - 1][vertice_origem - 1].bolean = 1; // Marca a aresta como existente
+            grafo->matriz_adjacencia[vertice_destino - 1][vertice_origem - 1].peso_aresta = peso; // Define o peso da aresta, se for ponderada
         }
 
         retorno = 1; // Indica que a aresta foi inserida com sucesso
