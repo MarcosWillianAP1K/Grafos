@@ -46,6 +46,39 @@ GRAFO iniciar_grafo(short int eh_ponderado, short int eh_digrafo)
     return grafo;
 }
 
+GRAFO criar_grafo(short int eh_ponderado, short int eh_digrafo, int n_vertices)
+{
+    GRAFO grafo = iniciar_grafo(eh_ponderado, eh_digrafo);
+
+    grafo.n_vertices = n_vertices;
+
+    grafo.vetor_vertices = (VERTICE *)malloc(n_vertices * sizeof(VERTICE));
+    verificar_alocacao(grafo.vetor_vertices, "falha ao alocar memória para o vetor de vértices");
+
+    for (int i = 0; i < n_vertices; i++)
+    {
+        grafo.vetor_vertices[i].grau = 0; // Inicializa o grau do vértice
+        grafo.vetor_vertices[i].peso = 0; // Inicializa o peso do vértice, se for ponderado
+    }
+
+    grafo.matriz_adjacencia = (MATRIZ_ADJACENCIA **)malloc(n_vertices * sizeof(MATRIZ_ADJACENCIA *));
+    verificar_alocacao(grafo.matriz_adjacencia, "falha ao alocar memória para a matriz de adjacência");
+
+    for (int i = 0; i < n_vertices; i++)
+    {
+        grafo.matriz_adjacencia[i] = (MATRIZ_ADJACENCIA *)malloc(n_vertices * sizeof(MATRIZ_ADJACENCIA));
+        verificar_alocacao(grafo.matriz_adjacencia[i], "falha ao alocar memória para a linha da matriz de adjacência");
+        
+        for (int j = 0; j < n_vertices; j++)
+        {
+            grafo.matriz_adjacencia[i][j].bolean = 0; // Inicializa a existência da aresta como falsa
+            grafo.matriz_adjacencia[i][j].peso_aresta = 0; // Inicializa o peso da aresta como zero
+        }
+    }
+
+    return grafo;
+}
+
 void liberar_grafo(GRAFO *grafo)
 {
     if (grafo != NULL)
@@ -294,7 +327,7 @@ int main()
     short int eh_ponderado = 0; // Grafo ponderado
     short int eh_digrafo = 0;   // Grafo não direcionado
 
-    GRAFO grafo = iniciar_grafo(eh_ponderado, eh_digrafo);
+    GRAFO grafo = criar_grafo(eh_ponderado, eh_digrafo, 5); // Cria um grafo com 5 vértices
 
     printf("Grafo criado com sucesso!\n");
     printf("Numero de vertices: %d\n", grafo.n_vertices);
@@ -302,11 +335,7 @@ int main()
     printf("Eh digrafo: %d\n", grafo.eh_digrafo);
 
     // Inserindo vértices no grafo
-    criar_vertice(&grafo, 0); // Vértice 1
-    criar_vertice(&grafo, 0); // Vértice 2
-    criar_vertice(&grafo, 0); // Vértice 3
-    criar_vertice(&grafo, 0); // Vértice 4
-    criar_vertice(&grafo, 0); // Vértice 5
+    
 
     printf("\n");
     // Imprimindo a matriz de adjacência do grafo após a inserção dos vértices
