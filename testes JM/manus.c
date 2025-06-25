@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUMERO_DE_DISCOS 4
+#define NUMERO_DE_DISCOS 2
 #define NUMERO_DE_PINOS 3
 #define INFINITO 999999999 // Um valor grande o suficiente para representar o infinito
 
