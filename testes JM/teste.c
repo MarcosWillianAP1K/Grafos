@@ -1,13 +1,3 @@
-/******************************************************************************
-VISUAL GRAFOS
-
-GRAFOS - LISTA DE ADJANCENCIA 
-
-Desenvolvido com o objetivo de ensino
-Paulo Martins
-contato: paulo.martins@unesp.br ou pgsm5@hotmail.com 
-*******************************************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #define true 1
@@ -91,13 +81,15 @@ void imprime(GRAFO *gr){
 int main()
 {
 	
-	GRAFO * gr = criaGrafo(5);
+	GRAFO * gr = criaGrafo(10);
 	criaAresta(gr, 0, 1, 2);
 	criaAresta(gr, 1, 2, 4);
 	criaAresta(gr, 2, 0, 12);
 	criaAresta(gr, 2, 4, 40);
 	criaAresta(gr, 3, 1, 3);
 	criaAresta(gr, 4, 3, 8);
+    criaAresta(gr, 5, 6, 1);
+    criaAresta(gr, 8, 7, 5);
     
     imprime(gr);
 }
