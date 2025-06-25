@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define N 4       // Número de discos
+#define N 2       // Número de discos
 #define Pinos 3
-#define MAX 81 // Pinos ^ N
+#define MAX 9 // Pinos ^ N
 
 const int INF = 0x3f3f3f3f;
 
