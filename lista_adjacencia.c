@@ -11,7 +11,6 @@ typedef struct ARESTA
 
 typedef struct VERTICE
 {
-    int id;   // Identificador do vértice
     int grau; // Grau do vértice
     int peso; // Peso do vértice, s e for ponderado
 } VERTICE;
@@ -60,6 +59,25 @@ GRAFO iniciar_grafo(short int eh_ponderado, short int eh_digrafo)
     grafo.eh_digrafo = eh_digrafo;
     grafo.n_vertices = 0;
     grafo.vetor_adjacencia = NULL;
+
+    return grafo;
+}
+
+GRAFO criar_grafo(short int eh_ponderado, short int eh_digrafo, int n_vertices)
+{
+    GRAFO grafo = iniciar_grafo(eh_ponderado, eh_digrafo);
+
+    grafo.n_vertices = n_vertices;
+
+    grafo.vetor_adjacencia = (VETOR_ADJACENCIA *)malloc(n_vertices * sizeof(VETOR_ADJACENCIA));
+    verificar_alocacao(grafo.vetor_adjacencia, "falha ao alocar memória para o vetor de adjacência");
+
+    for (int i = 0; i < n_vertices; i++)
+    {
+        grafo.vetor_adjacencia[i].vertice.grau = 0;  // Inicializa o grau do vértice
+        grafo.vetor_adjacencia[i].vertice.peso = 0;  // Inicializa o peso do vértice, se for ponderado
+        grafo.vetor_adjacencia[i].lista_aresta = NULL; // Inicializa a lista de arestas como vazia
+    }
 
     return grafo;
 }
@@ -171,7 +189,6 @@ short int inserir_vertice(GRAFO *grafo, int peso)
         verificar_alocacao(novo_vetor, "falha ao alocar memória para o vetor de adjacência");
 
         grafo->vetor_adjacencia = novo_vetor;
-        grafo->vetor_adjacencia[grafo->n_vertices].vertice.id = grafo->n_vertices + 1;
         grafo->vetor_adjacencia[grafo->n_vertices].vertice.peso = peso;
         grafo->vetor_adjacencia[grafo->n_vertices].vertice.grau = 0;
         grafo->vetor_adjacencia[grafo->n_vertices].lista_aresta = NULL;
@@ -233,7 +250,6 @@ short int remover_vertice(GRAFO *grafo, int id_vertice)
         // Realoca o vetor de adjacência para remover o vértice
         for (int i = id_vertice - 1; i < grafo->n_vertices - 1; i++)
         {
-            grafo->vetor_adjacencia[i + 1].vertice.id--;
             grafo->vetor_adjacencia[i] = grafo->vetor_adjacencia[i + 1];
         }
 
@@ -261,7 +277,7 @@ void imprimir_lista_grafo(GRAFO *grafo)
         printf("\nLista de Adjacencia do Grafo:\n");
         for (int i = 0; i < grafo->n_vertices; i++)
         {
-            printf("Vertice %d: ", grafo->vetor_adjacencia[i].vertice.id);
+            printf("Vertice %d: ", i + 1);
             ARESTA *aresta_atual = grafo->vetor_adjacencia[i].lista_aresta;
             while (aresta_atual != NULL)
             {
@@ -281,7 +297,7 @@ int main()
     short int eh_ponderado = 0; // Grafo ponderado
     short int eh_digrafo = 0;   // Grafo não direcionado
 
-    GRAFO grafo = iniciar_grafo(eh_ponderado, eh_digrafo);
+    GRAFO grafo = criar_grafo(eh_ponderado, eh_digrafo, 5); // Cria um grafo com 5 vértices
 
     printf("Grafo criado com sucesso!\n");
     printf("Numero de vertices: %d\n", grafo.n_vertices);
@@ -290,11 +306,7 @@ int main()
 
 
     // Inserindo vértices no grafo
-    inserir_vertice(&grafo, 1); // Vértice 1  
-    inserir_vertice(&grafo, 1); // Vértice 2
-    inserir_vertice(&grafo, 1); // Vértice 3
-    inserir_vertice(&grafo, 1); // Vértice 4
-    inserir_vertice(&grafo, 1); // Vértice 5
+    
 
 
     printf("\n");
