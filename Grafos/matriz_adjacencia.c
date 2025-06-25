@@ -1,36 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "matriz_adjacencia.h"
+#include "../Utilitarios/Utilitarios.h"
 
-typedef struct MATRIZ_ADJACENCIA
-{
-    short int bolean;
-    int peso_aresta; // Peso da aresta, se for ponderada
 
-} MATRIZ_ADJACENCIA;
-
-typedef struct VERTICE
-{
-    int grau; // Grau do vértice
-    int peso; // Peso do vértice, se for ponderado
-} VERTICE;
-
-typedef struct GRAFO
-{
-    short int eh_ponderado;                // 1 se o grafo é ponderado, 0 se não
-    short int eh_digrafo;                  // 1 se o grafo é um dígrafo, 0 se não
-    int n_vertices;                        // Número de vértices do grafo
-    MATRIZ_ADJACENCIA **matriz_adjacencia; // Matriz de adjacência
-    VERTICE *vetor_vertices;               // Vetor de vértices
-} GRAFO;
-
-void verificar_alocacao(void *ptr, const char *mensagem)
-{
-    if (!ptr)
-    {
-        fprintf(stderr, "Erro de alocacao: %s\n", mensagem);
-        exit(EXIT_FAILURE);
-    }
-}
 
 // Função para criar um grafo com grau máximo, ponderado e direcionado
 GRAFO iniciar_grafo(short int eh_ponderado, short int eh_digrafo)
@@ -212,7 +185,6 @@ short int criar_vertice(GRAFO *grafo, int peso)
     return retorno;
 }
 
-// Remover ainda possui falhas, ja que o id dos vertices não é atualizado corretamente nas listas de arestas
 short int apagar_vertice(GRAFO *grafo, int id_vertice)
 {
     short int retorno = 0;
@@ -322,56 +294,59 @@ void imprimir_matriz_grafo(GRAFO *grafo)
     }
 }
 
-int main()
-{
-    short int eh_ponderado = 0; // Grafo ponderado
-    short int eh_digrafo = 0;   // Grafo não direcionado
 
-    GRAFO grafo = criar_grafo(eh_ponderado, eh_digrafo, 5); // Cria um grafo com 5 vértices
 
-    printf("Grafo criado com sucesso!\n");
-    printf("Numero de vertices: %d\n", grafo.n_vertices);
-    printf("Eh ponderado: %d\n", grafo.eh_ponderado);
-    printf("Eh digrafo: %d\n", grafo.eh_digrafo);
+//=========================MAIN=========================
+// int main()
+// {
+//     short int eh_ponderado = 0; // Grafo ponderado
+//     short int eh_digrafo = 0;   // Grafo não direcionado
 
-    // Inserindo vértices no grafo
+//     GRAFO grafo = criar_grafo(eh_ponderado, eh_digrafo, 5); // Cria um grafo com 5 vértices
+
+//     printf("Grafo criado com sucesso!\n");
+//     printf("Numero de vertices: %d\n", grafo.n_vertices);
+//     printf("Eh ponderado: %d\n", grafo.eh_ponderado);
+//     printf("Eh digrafo: %d\n", grafo.eh_digrafo);
+
+//     // Inserindo vértices no grafo
     
 
-    printf("\n");
-    // Imprimindo a matriz de adjacência do grafo após a inserção dos vértices
-    imprimir_matriz_grafo(&grafo);
+//     printf("\n");
+//     // Imprimindo a matriz de adjacência do grafo após a inserção dos vértices
+//     imprimir_matriz_grafo(&grafo);
 
 
-    criar_aresta(&grafo, 1, 2, 1);
-    criar_aresta(&grafo, 1, 3, 1);
-    criar_aresta(&grafo, 2, 4, 1);
+//     criar_aresta(&grafo, 1, 2, 1);
+//     criar_aresta(&grafo, 1, 3, 1);
+//     criar_aresta(&grafo, 2, 4, 1);
 
-    printf("\n");
-    // Imprimindo a matriz de adjacência do grafo após a inserção das
-    // arestas
-    imprimir_matriz_grafo(&grafo);
+//     printf("\n");
+//     // Imprimindo a matriz de adjacência do grafo após a inserção das
+//     // arestas
+//     imprimir_matriz_grafo(&grafo);
 
-    // Removendo arestas do grafo
-    apagar_aresta(&grafo, 1, 2);
+//     // Removendo arestas do grafo
+//     apagar_aresta(&grafo, 1, 2);
 
-    printf("\nAresta (1, 2) removida.\n");
+//     printf("\nAresta (1, 2) removida.\n");
 
-    // Imprimindo a matriz de adjacência do grafo após a remoção
-    printf("\n");
-    imprimir_matriz_grafo(&grafo);
-
-
-    // Removendo um vértice do grafo
-    apagar_vertice(&grafo, 3);
-    printf("\nVertice 3 removido.\n");
-
-    // Imprimindo a matriz de adjacência do grafo após a remoção do vértice
-    printf("\n");
-    imprimir_matriz_grafo(&grafo);
+//     // Imprimindo a matriz de adjacência do grafo após a remoção
+//     printf("\n");
+//     imprimir_matriz_grafo(&grafo);
 
 
-    liberar_grafo(&grafo); // Libera a memória alocada para o grafo
-    printf("\n\nGrafo liberado com sucesso!\n");
+//     // Removendo um vértice do grafo
+//     apagar_vertice(&grafo, 3);
+//     printf("\nVertice 3 removido.\n");
 
-    return 0;
-}
+//     // Imprimindo a matriz de adjacência do grafo após a remoção do vértice
+//     printf("\n");
+//     imprimir_matriz_grafo(&grafo);
+
+
+//     liberar_grafo(&grafo); // Libera a memória alocada para o grafo
+//     printf("\n\nGrafo liberado com sucesso!\n");
+
+//     return 0;
+// }
