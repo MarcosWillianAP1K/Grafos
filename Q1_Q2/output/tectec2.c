@@ -6,7 +6,7 @@
 #define Pinos 3
 #define MAX 9 // Pinos ^ N
 
-const int INF = 0x3f3f3f3f;
+const int INF = 99999999;
 
 typedef struct {
     int conf[N];
@@ -34,26 +34,27 @@ int aresta(vertice v1, vertice v2) {
         }
     }
 
-    int invalido = 1;
+    int valido = (diff == 1); // Válido apenas se exatamente um disco mudou
 
-    for (int i = 0; i < N && invalido; ++i) {
-        if (i != disco_alterado && ((v1.conf[i] == v1.conf[disco_alterado] && i < disco_alterado) || (v2.conf[i] == v2.conf[disco_alterado] && i < disco_alterado))) {
-            invalido = 0;
+    for (int i = 0; i < N && valido; ++i) {
+        if (i != disco_alterado && i < disco_alterado && 
+            (v1.conf[i] == v1.conf[disco_alterado] || v2.conf[i] == v2.conf[disco_alterado])) {
+            valido = 0;
         }
     }
 
-    return (diff > 1 || !invalido) ? 0 : 1;
+    return valido;
 }
 //-----------------------------------------------
 void adjacencia(vertice *grafo) {
     for (int i = 0; i < MAX; ++i)
         for (int j = 0; j < MAX; ++j)
-            adj[i][j] = aresta(grafo[i], grafo[j]) ? 1 : INF;
+            adj[i][j] = aresta(grafo[i], grafo[j]) ? 1 : 0;
 }
 //-----------------------------------------------
 
 void caminhoMinimo(int *p, int s, int f) {
-    printf("Caminho minimo entre configurações %d e %d:\n", s, f);
+    printf("Caminho minimo entre configuracoes %d e %d:\n", s, f);
 
     int caminho[MAX], temp = p[f], pos = 0;
 
@@ -75,29 +76,45 @@ void fordMooreBellman(int s, int fim) {
 
     for (int i = 0; i < MAX; i++) dp[i] = INF;
     dp[s] = 0;
-    for (int i = 0; i < MAX - 1; ++i) {
+    
+    int convergiu = 0;
+    for (int i = 0; i < MAX - 1 && !convergiu; ++i) {
         int relaxado = 0;
         for (int j = 0; j < MAX; ++j) {
             if (dp[j] != INF) {
                 for (int k = 0; k < MAX; k++) {
-                    if (adj[j][k] != INF && dp[j] + adj[j][k] < dp[k]) {
-                        dp[k] = dp[j] + adj[j][k];
+                    if (adj[j][k] == 1 && dp[j] + 1 < dp[k]) {
+                        dp[k] = dp[j] + 1;
                         p[k] = j;
                         relaxado = 1;
                     }
                 }
             }
         }
-        if (!relaxado) break;
+        if (!relaxado) {
+            convergiu = 1;
+        }
     }
     caminhoMinimo(p, s, fim);
 }
+
 //-----------------------------------------------
 void imprimir(vertice *grafo) {
     for (int i = 0; i < MAX; ++i) {
         printf("vertice %d: ", i);
         for (int j = 0; j < N; ++j)
             printf("%d ", grafo[i].conf[j]);
+        printf("\n");
+    }
+}
+//-----------------------------------------------
+
+void imprimirAdjacencia() {
+    printf("Matriz de adjacencia:\n");
+    for (int i = 0; i < MAX; ++i) {
+        for (int j = 0; j < MAX; ++j) {
+            printf("%d ", adj[i][j]);
+        }
         printf("\n");
     }
 }
@@ -109,12 +126,43 @@ int main() {
     imprimir(grafo);
     adjacencia(grafo);
 
-    int inicio, fim;
+    int opcao, origem, destino;
 
-    printf("Digite a configuracao inicial:\n"); scanf("%d", &inicio);
-    printf("Digite a configuracao final:\n"); scanf("%d", &fim); 
+    do {
+        printf("\n\n==== MENU ====\n");
+        printf("1. Imprimir vertices do grafo\n");
+        printf("2. Imprimir matriz de adjacencia\n");
+        printf("3. Encontrar caminho minimo com Ford-Moore-Bellman\n");
+        printf("4. Encontrar caminho minimo com Dijkstra\n");
+        printf("5. Sair\n");
+        printf("Escolha uma opcao: ");
+        scanf("%d", &opcao);
 
-    fordMooreBellman(inicio, fim);
+        switch (opcao) {
+            case 1:
+                imprimir(grafo);
+                break;
+            case 2:
+                imprimirAdjacencia();
+                break;
+            case 3:
+                printf("Digite o vertice de origem: ");
+                scanf("%d", &origem);
+                printf("Digite o vertice de destino: ");
+                scanf("%d", &destino);
+                if (origem >= 0 && origem < MAX && destino >= 0 && destino < MAX)
+                    fordMooreBellman(origem, destino);
+                else
+                    printf("Vertices invalidos!\n");
+                break;
+            case 5:
+                printf("Saindo...\n");
+                break;
+            default:
+                printf("Opcao invalida!\n");
+        }
+    } while (opcao != 5);
+    
 
     return 0;
 }
