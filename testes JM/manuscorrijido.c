@@ -1,146 +1,305 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-// Estrutura para representar um grafo
-typedef struct Grafo {
-    int numVertices;
-    int** matrizAdj; // Matriz de adjacência para armazenar arestas
+#define PINOS 3
+#define DISCOS 4
+#define ESTADOS 81 // 3^4 = 81 estados
+
+// Estrutura para o grafo
+typedef struct {
+    int vertices; // Número de vértices (estados)
+    int** matriz; // Matriz de adjacência
 } Grafo;
 
-// Função para criar um novo grafo com n vértices
-Grafo* criarGrafo(int n) {
-    Grafo* grafo = (Grafo*)malloc(sizeof(Grafo));
-    grafo->numVertices = n;
-    grafo->matrizAdj = (int**)malloc(n * sizeof(int*));
-    for (int i = 0; i < n; i++) {
-        grafo->matrizAdj[i] = (int*)calloc(n, sizeof(int));
+// Inicializa o grafo com verificação de erro
+Grafo* inicializarGrafo(int vertices) {
+    Grafo* grafo = NULL;
+    int sucesso = 1;
+    
+    if (vertices > 0) {
+        grafo = (Grafo*) malloc(sizeof(Grafo));
+        if (grafo != NULL) {
+            grafo->vertices = vertices;
+            grafo->matriz = (int**) malloc(vertices * sizeof(int*));
+            if (grafo->matriz != NULL) {
+                for (int i = 0; i < vertices && sucesso; i++) {
+                    grafo->matriz[i] = (int*) calloc(vertices, sizeof(int));
+                    if (grafo->matriz[i] == NULL) {
+                        sucesso = 0;
+                    }
+                }
+            } else {
+                sucesso = 0;
+            }
+        } else {
+            sucesso = 0;
+        }
+    } else {
+        sucesso = 0;
     }
+    
+    if (!sucesso && grafo != NULL) {
+        if (grafo->matriz != NULL) {
+            for (int i = 0; i < vertices; i++) {
+                free(grafo->matriz[i]);
+            }
+            free(grafo->matriz);
+        }
+        free(grafo);
+        grafo = NULL;
+    }
+    
     return grafo;
 }
 
-// Função para liberar a memória do grafo
+// Libera a memória do grafo
 void liberarGrafo(Grafo* grafo) {
-    for (int i = 0; i < grafo->numVertices; i++) {
-        free(grafo->matrizAdj[i]);
+    if (grafo != NULL) {
+        if (grafo->matriz != NULL) {
+            for (int i = 0; i < grafo->vertices; i++) {
+                if (grafo->matriz[i] != NULL) {
+                    free(grafo->matriz[i]);
+                }
+            }
+            free(grafo->matriz);
+        }
+        free(grafo);
     }
-    free(grafo->matrizAdj);
-    free(grafo);
 }
 
-// Função para adicionar uma aresta ao grafo
-void adicionarAresta(Grafo* grafo, int v, int w) {
-    grafo->matrizAdj[v][w] = 1;
-    grafo->matrizAdj[w][v] = 1; // Grafo não direcionado
-}
-
-// Função para criar um grafo ciclo C6 (6 vértices)
-Grafo* criarC6() {
-    Grafo* c6 = criarGrafo(6);
-    for (int i = 0; i < 6; i++) {
-        adicionarAresta(c6, i, (i + 1) % 6);
+// Converte estado para índice único
+int estadoParaIndice(int* estado) {
+    int indice = 0;
+    for (int i = 0; i < DISCOS; i++) {
+        indice = indice * PINOS + estado[i];
     }
-    return c6;
+    return indice;
 }
 
-// Função para obter um emparelhamento perfeito de C6
-void obterEmparelhamentoPerfeito(int emparelhamento[3][2]) {
-    emparelhamento[0][0] = 0; emparelhamento[0][1] = 1;
-    emparelhamento[1][0] = 2; emparelhamento[1][1] = 3;
-    emparelhamento[2][0] = 4; emparelhamento[2][1] = 5;
+// Converte índice para estado
+void indiceParaEstado(int indice, int* estado) {
+    for (int i = DISCOS - 1; i >= 0; i--) {
+        estado[i] = indice % PINOS;
+        indice /= PINOS;
+    }
 }
 
-// Função para realizar a operação de enxerto
-Grafo* enxertar(Grafo* Q, int v, int w, Grafo* G, int ab[2]) {
-    int novoNumVertices = G->numVertices - 2 + Q->numVertices;
-    Grafo* R = criarGrafo(novoNumVertices);
+// Formata estado como (p1,p2,p3,p4)
+void formatarEstado(int* estado, char* buffer) {
+    sprintf(buffer, "(%d,%d,%d,%d)", estado[0], estado[1], estado[2], estado[3]);
+}
 
-    // Copiar arestas de Q para R
-    for (int i = 0; i < Q->numVertices; i++) {
-        for (int j = 0; j < Q->numVertices; j++) {
-            if (Q->matrizAdj[i][j]) {
-                R->matrizAdj[i][j] = 1;
+// Verifica se um movimento é legal
+int movimentoLegal(int* estadoOrigem, int pinoOrigem, int pinoDestino) {
+    int isLegal = 0;
+    
+    int discoOrigem = -1;
+    for (int i = 0; i < DISCOS; i++) {
+        if (estadoOrigem[i] == pinoOrigem && (discoOrigem == -1 || i < discoOrigem)) {
+            discoOrigem = i;
+        }
+    }
+    
+    if (discoOrigem != -1) {
+        int discoDestino = -1;
+        for (int i = 0; i < DISCOS; i++) {
+            if (estadoOrigem[i] == pinoDestino && (discoDestino == -1 || i < discoDestino)) {
+                discoDestino = i;
+            }
+        }
+        
+        if (discoDestino == -1 || discoOrigem < discoDestino) {
+            isLegal = 1;
+        }
+    }
+    
+    return isLegal;
+}
+
+// Constrói o grafo da Torre de Hanói
+void construirGrafoHanoi(Grafo* grafo) {
+    if (grafo != NULL) {
+        int estadoOrigem[DISCOS], estadoDestino[DISCOS];
+        
+        for (int i = 0; i < grafo->vertices; i++) {
+            indiceParaEstado(i, estadoOrigem);
+            
+            for (int pinoOrigem = 0; pinoOrigem < PINOS; pinoOrigem++) {
+                for (int pinoDestino = 0; pinoDestino < PINOS; pinoDestino++) {
+                    if (pinoOrigem != pinoDestino && movimentoLegal(estadoOrigem, pinoOrigem, pinoDestino)) {
+                        memcpy(estadoDestino, estadoOrigem, DISCOS * sizeof(int));
+                        int discoMovido = 0;
+                        for (int d = 0; d < DISCOS && !discoMovido; d++) {
+                            if (estadoOrigem[d] == pinoOrigem) {
+                                estadoDestino[d] = pinoDestino;
+                                discoMovido = 1;
+                            }
+                        }
+                        int indiceDestino = estadoParaIndice(estadoDestino);
+                        grafo->matriz[i][indiceDestino] = 1;
+                    }
+                }
             }
         }
     }
+}
 
-    // Copiar arestas de G para R, excluindo vértices a e b
-    int a = ab[0], b = ab[1];
-    int deslocamento = Q->numVertices;
-    for (int i = 0; i < G->numVertices; i++) {
-        if (i == a || i == b) continue;
-        for (int j = 0; j < G->numVertices; j++) {
-            if (j == a || j == b) continue;
-            int novoI = (i < a) ? i : (i < b) ? i - 1 : i - 2;
-            int novoJ = (j < a) ? j : (j < b) ? j - 1 : j - 2;
-            if (G->matrizAdj[i][j]) {
-                R->matrizAdj[deslocamento + novoI][deslocamento + novoJ] = 1;
+// Salva a matriz em arquivo
+void salvarMatriz(Grafo* grafo, const char* nomeArquivo) {
+    FILE* arquivo = fopen(nomeArquivo, "w");
+    int sucesso = (arquivo != NULL);
+    
+    if (sucesso && grafo != NULL) {
+        fprintf(arquivo, "Matriz de Adjacência (%d x %d):\n", grafo->vertices, grafo->vertices);
+        fprintf(arquivo, "Estado\\Estado ");
+        char buffer[16];
+        for (int j = 0; j < grafo->vertices; j++) {
+            int estado[DISCOS];
+            indiceParaEstado(j, estado);
+            formatarEstado(estado, buffer);
+            fprintf(arquivo, "%-10s ", buffer);
+        }
+        fprintf(arquivo, "\n");
+
+        for (int i = 0; i < grafo->vertices; i++) {
+            int estado[DISCOS];
+            indiceParaEstado(i, estado);
+            formatarEstado(estado, buffer);
+            fprintf(arquivo, "%-13s ", buffer);
+            for (int j = 0; j < grafo->vertices; j++) {
+                fprintf(arquivo, "%-10d ", grafo->matriz[i][j]);
             }
+            fprintf(arquivo, "\n");
         }
-    }
-
-    // Conectar Q a G
-    for (int i = 0; i < G->numVertices; i++) {
-        if (i == a || i == b) continue;
-        int novoI = (i < a) ? i : (i < b) ? i - 1 : i - 2;
-        if (G->matrizAdj[a][i]) {
-            R->matrizAdj[v][deslocamento + novoI] = 1;
-            R->matrizAdj[deslocamento + novoI][v] = 1;
-        }
-        if (G->matrizAdj[b][i]) {
-            R->matrizAdj[w][deslocamento + novoI] = 1;
-            R->matrizAdj[deslocamento + novoI][w] = 1;
-        }
-    }
-
-    return R;
-}
-
-// Função para imprimir a matriz de adjacência
-void imprimirMatrizAdj(Grafo* grafo) {
-    printf("\nMatriz de Adjacência do Grafo H_n (%d vértices):\n", grafo->numVertices);
-    for (int i = 0; i < grafo->numVertices; i++) {
-        for (int j = 0; j < grafo->numVertices; j++) {
-            printf("%d ", grafo->matrizAdj[i][j]);
-        }
-        printf("\n");
+        fclose(arquivo);
+        printf("Matriz salva em %s\n", nomeArquivo);
+    } else {
+        printf("Erro ao abrir o arquivo %s ou grafo inválido!\n", nomeArquivo);
     }
 }
 
-// Função recursiva para construir o grafo de Hanoi H_n
-Grafo* construirGrafoHanoi(int n) {
-    if (n == 1) {
-        Grafo* H1 = criarGrafo(3); // H1 é um triângulo (C3)
-        adicionarAresta(H1, 0, 1);
-        adicionarAresta(H1, 1, 2);
-        adicionarAresta(H1, 2, 0);
-        return H1;
+// Exibe resumo das conexões
+void exibirResumoConexoes(Grafo* grafo) {
+    if (grafo != NULL) {
+        printf("\nResumo das Conexões (arestas existentes):\n");
+        char bufferOrigem[16], bufferDestino[16];
+        for (int i = 0; i < grafo->vertices; i++) {
+            int estadoOrigem[DISCOS];
+            indiceParaEstado(i, estadoOrigem);
+            formatarEstado(estadoOrigem, bufferOrigem);
+            int count = 0;
+            for (int j = 0; j < grafo->vertices; j++) {
+                if (grafo->matriz[i][j] == 1) {
+                    count++;
+                }
+            }
+            printf("Estado %s: ", bufferOrigem);
+            for (int j = 0; j < grafo->vertices; j++) {
+                if (grafo->matriz[i][j] == 1) {
+                    int estadoDestino[DISCOS];
+                    indiceParaEstado(j, estadoDestino);
+                    formatarEstado(estadoDestino, bufferDestino);
+                    printf("%s ", bufferDestino);
+                }
+            }
+            printf("(%d conexões)\n", count);
+        }
+    } else {
+        printf("Grafo inválido!\n");
     }
-
-    Grafo* H_n_menos_1 = construirGrafoHanoi(n - 1);
-    Grafo* C6 = criarC6();
-    int emparelhamento[3][2];
-    obterEmparelhamentoPerfeito(emparelhamento);
-
-    Grafo* H_n = C6;
-    int v = 0, w = 1; // Assumindo vértices de grau 2 em H_{n-1}
-
-    // Enxertar três cópias de H_{n-1} em C6
-    for (int i = 0; i < 3; i++) {
-        Grafo* temp = enxertar(H_n_menos_1, v, w, H_n, emparelhamento[i]);
-        liberarGrafo(H_n);
-        H_n = temp;
-    }
-
-    liberarGrafo(H_n_menos_1);
-    return H_n;
 }
 
-// Função principal para teste
+// Exibe configuração de um estado
+void exibirConfiguracaoEstado(int indice) {
+    int valido = (indice >= 0 && indice < ESTADOS);
+    
+    if (valido) {
+        int estado[DISCOS];
+        indiceParaEstado(indice, estado);
+        char buffer[16];
+        formatarEstado(estado, buffer);
+        
+        int pinos[PINOS][DISCOS];
+        int tamanhos[PINOS] = {0, 0, 0};
+        
+        for (int p = 0; p < PINOS; p++) {
+            tamanhos[p] = 0;
+        }
+        
+        for (int d = 0; d < DISCOS; d++) {
+            int pino = estado[d];
+            pinos[pino][tamanhos[pino]] = d + 1;
+            tamanhos[pino]++;
+        }
+        
+        printf("\nConfiguração do estado %s:\n", buffer);
+        for (int p = 0; p < PINOS; p++) {
+            printf("Pino %d: ", p);
+            for (int i = tamanhos[p] - 1; i >= 0; i--) {
+                printf("%d ", pinos[p][i]);
+            }
+            if (tamanhos[p] == 0) {
+                printf("(vazio)");
+            }
+            printf("\n");
+        }
+    } else {
+        printf("Índice inválido! Deve estar entre 0 e %d.\n", ESTADOS - 1);
+    }
+}
+
+// Exibe menu e lê opção
+int exibirMenu() {
+    int opcao = 0;
+    printf("\n=== Menu Torre de Hanói ===\n");
+    printf("1. Exibir resumo das conexões\n");
+    printf("2. Salvar matriz de adjacência em arquivo\n");
+    printf("3. Exibir configuração de um estado\n");
+    printf("4. Sair\n");
+    printf("Escolha uma opção (1-4): ");
+    int resultado = scanf("%d", &opcao);
+    while (getchar() != '\n');
+    if (resultado != 1 || opcao < 1 || opcao > 4) {
+        opcao = 0;
+    }
+    return opcao;
+}
+
 int main() {
-    int n = 3; // Exemplo: construir H_3
-    Grafo* H_n = construirGrafoHanoi(n);
-    printf("Grafo de Hanoi H_%d construído com %d vértices\n", n, H_n->numVertices);
-    imprimirMatrizAdj(H_n); // Imprimir a matriz de adjacência
-    liberarGrafo(H_n);
+    Grafo* grafo = inicializarGrafo(ESTADOS);
+    int sucesso = (grafo != NULL);
+    
+    if (sucesso) {
+        construirGrafoHanoi(grafo);
+        int rodando = 1;
+        while (rodando) {
+            int opcao = exibirMenu();
+            
+            if (opcao == 1) {
+                exibirResumoConexoes(grafo);
+            } else if (opcao == 2) {
+                salvarMatriz(grafo, "matriz_hanoi.txt");
+            } else if (opcao == 3) {
+                int indice = 0;
+                printf("Digite o índice do estado (0 a %d): ", ESTADOS - 1);
+                int resultado = scanf("%d", &indice);
+                while (getchar() != '\n');
+                if (resultado == 1) {
+                    exibirConfiguracaoEstado(indice);
+                } else {
+                    printf("Entrada inválida! Digite um número entre 0 e %d.\n", ESTADOS - 1);
+                }
+            } else if (opcao == 4) {
+                rodando = 0;
+            } else {
+                printf("Opção inválida! Escolha entre 1 e 4.\n");
+            }
+        }
+        liberarGrafo(grafo);
+    } else {
+        printf("Erro ao inicializar o grafo!\n");
+    }
+    
     return 0;
 }
