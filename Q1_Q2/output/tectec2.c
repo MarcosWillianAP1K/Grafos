@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
-#define NUM_DISCOS 2  // Número de discos
+#define NUM_DISCOS 4  // Número de discos
 #define NUM_PINOS 3
-#define MAX 9 // NUM_PINOS ^ NUM_DISCOS
+#define MAX 81 // NUM_PINOS ^ NUM_DISCOS
 
 const int INF = 99999999; 
-
 typedef struct {
     int conf[NUM_DISCOS]; // Configuração dos discos nos pinos
 } NoGrafo; 
@@ -64,9 +64,9 @@ void gerarAdjacencias(NoGrafo *grafo) {
 }
 //-----------------------------------------------
 
-// Imprime o caminho mínimo encontrado
+//Imprime o caminho mínimo encontrado
 void imprimirCaminho(int *p, int s, int f) {
-    printf("Caminho minimo entre configuracoes %d e %d:\n", s, f);
+    printf("\nCaminho minimo entre configuracoes %d e %d:\n", s, f);
 
     int caminho[f + 1], temp = p[f], pos = 0;
 
@@ -75,11 +75,14 @@ void imprimirCaminho(int *p, int s, int f) {
     for (int i = pos - 1; ~i; i--) printf("%d ", caminho[i]);
 
     printf("%d\n", f);
+
+    printf("Quantidade de movimentos: %d\n", pos);
 }
+
 //-----------------------------------------------
 // Implementação do algoritmo de Ford-Moore-Bellman
-void fordMooreBellman(int s, int fim) {
-    int dp[MAX], p[MAX];
+int* fordMooreBellman(int s) {
+    static int dp[MAX], p[MAX];
 
     memset(p, -1, sizeof(p));
 
@@ -97,14 +100,13 @@ void fordMooreBellman(int s, int fim) {
             }
         }
     }
-    printf("Distancia minima (Ford-Moore-Bellman): %d\n", dp[fim]);
-    imprimirCaminho(p, s, fim);
+    return p; // Retorna o vetor de predecessores
 }
 
 //-----------------------------------------------
 // Implementação do algoritmo de Dijkstra
-void dijkstra(int s, int fim) {
-    int dp[MAX], p[MAX];
+int* dijkstra(int s) {
+    static int dp[MAX], p[MAX];
     int visitado[MAX] = {0};
 
     memset(p, -1, sizeof(p));
@@ -129,8 +131,7 @@ void dijkstra(int s, int fim) {
             }
         }
     }
-    printf("Distancia minima (Dijkstra): %d\n", dp[fim]);
-    imprimirCaminho(p, s, fim);
+    return p; // Retorna o vetor de predecessores
 }
 
 //-----------------------------------------------
@@ -163,6 +164,9 @@ void imprimirMatrizAdjacencia() {
     }
 }
 //-----------------------------------------------
+
+void testes_tempo(int origem);
+
 int main() {
     NoGrafo grafo[MAX];
 
@@ -170,8 +174,8 @@ int main() {
     gerarAdjacencias(grafo);
 
     int opcao;
-    int origem;
-    int destino;
+    int origem = 0; // Configuração de origem
+    int destino = MAX - 1;
 
     do {
         printf("\n\n==== MENU ====\n");
@@ -179,7 +183,8 @@ int main() {
         printf("2. Imprimir matriz de adjacencia\n");
         printf("3. Encontrar caminho minimo com Ford-Moore-Bellman\n");
         printf("4. Encontrar caminho minimo com Dijkstra\n");
-        printf("5. Sair\n");
+        printf("5. Testes de tempo\n");
+        printf("0. Sair\n");
         printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
 
@@ -190,35 +195,73 @@ int main() {
             case 2:
                 imprimirMatrizAdjacencia();
                 break;
-            case 3:
-                printf("Digite a configuracao de origem: ");
-                scanf("%d", &origem);
-                printf("Digite a configuracao de destino: ");
-                scanf("%d", &destino);
-                if (origem >= 0 && origem < MAX && destino >= 0 && destino < MAX) {
-                    fordMooreBellman(origem, destino);
-                } else {
-                    printf("Configuracoes invalidas!\n");
-                }
+            case 3:{
+
+                printf("Encontrando caminho minimo com Dijkstra...\n");
+
+                clock_t inicio = clock();  // Marca o tempo de início
+                int *p = dijkstra(origem);
+                clock_t fim = clock();     // Marca o tempo de fim
+
+                imprimirCaminho(p, origem, destino);
+                double tempo_execucao = ((double)(fim - inicio)) / CLOCKS_PER_SEC * 1000; // Tempo em milissegundos
+                printf("Tempo de execucao (Dijkstra): %.6f ms\n", tempo_execucao);
                 break;
-            case 4:
-                printf("Digite a configuracao de origem: ");
-                scanf("%d", &origem);
-                printf("Digite a configuracao de destino: ");
-                scanf("%d", &destino);
-                if (origem >= 0 && origem < MAX && destino >= 0 && destino < MAX) {
-                    dijkstra(origem, destino);
-                } else {
-                    printf("Configuracoes invalidas!\n");
-                }
+            }
+            case 4:{
+                
+                printf("Encontrando caminho minimo com Ford-Moore-Bellman...\n");
+                
+                clock_t inicio = clock();  // Marca o tempo de início
+                int *p = fordMooreBellman(origem);
+                clock_t fim = clock();     // Marca o tempo de fim
+                
+                imprimirCaminho(p, origem, destino);
+                
+                double tempo_execucao = ((double)(fim - inicio)) / CLOCKS_PER_SEC * 1000; // Tempo em milissegundos
+                printf("Tempo de execucao (Ford-Moore-Bellman): %.6f ms\n", tempo_execucao);
                 break;
-            case 5:
+            }
+            case 5:{
+                
+                testes_tempo(origem);
+                break;
+            }
+            case 0:
                 printf("Saindo...\n");
                 break;
             default:
                 printf("Opcao invalida!\n");
         }
-    } while (opcao != 5);
+    } while (opcao != 0);
     
     return 0;
+}
+
+void testes_tempo(int origem) {
+    printf("\n==== TESTES DE TEMPO ====\n");
+    int num_testes = 1000;
+    double tempo_dijkstra = 0.0, tempo_ford_moore = 0.0;
+    printf("Realizando %d testes...\n", num_testes);
+
+    int i;
+    for (i = 0; i < num_testes; i++) {
+        clock_t inicio = clock();
+        dijkstra(origem);
+        clock_t fim = clock();
+        tempo_dijkstra += ((double)(fim - inicio)) / CLOCKS_PER_SEC * 1000;
+
+
+        inicio = clock();
+        fordMooreBellman(origem);
+        fim = clock();
+        tempo_ford_moore += ((double)(fim - inicio)) / CLOCKS_PER_SEC * 1000;
+
+    }
+
+    printf("\nTempo total Dijkstra: %.6f ms\n", tempo_dijkstra);
+    printf("Tempo medio Dijkstra: %.6f ms\n", tempo_dijkstra / num_testes);
+    printf("\nTempo total Ford-Moore-Bellman: %.6f ms\n", tempo_ford_moore);
+    printf("Tempo medio Ford-Moore-Bellman: %.6f ms\n", tempo_ford_moore / num_testes);
+    printf("\n==== FIM DOS TESTES ====\n");
 }
