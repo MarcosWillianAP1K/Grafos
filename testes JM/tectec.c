@@ -90,6 +90,36 @@ void fordMooreBellman(int s, int fim) {
     }
     caminhoMinimo(p, s, fim);
 }
+
+void dijkstra(int s, int fim) {
+    int dp[MAX], p[MAX];
+    int visitado[MAX] = {0};
+
+    memset(p, -1, sizeof(p));
+    for (int i = 0; i < MAX; i++) dp[i] = INF;
+    dp[s] = 0;
+
+    for (int i = 0; i < MAX; ++i) {
+        int u = -1, min_dist = INF;
+        for (int j = 0; j < MAX; ++j) {
+            if (!visitado[j] && dp[j] < min_dist) {
+                min_dist = dp[j];
+                u = j;
+            }
+        }
+        if (u == -1) break;
+
+        visitado[u] = 1;
+
+        for (int v = 0; v < MAX; ++v) {
+            if (adj[u][v] != INF && dp[u] + adj[u][v] < dp[v]) {
+                dp[v] = dp[u] + adj[u][v];
+                p[v] = u;
+            }
+        }
+    }
+    caminhoMinimo(p, s, fim);
+}
 //-----------------------------------------------
 void imprimir(vertice *grafo) {
     for (int i = 0; i < MAX; ++i) {
